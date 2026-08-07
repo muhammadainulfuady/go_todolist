@@ -1,9 +1,9 @@
 -- =====================================================================
--- Todo List REST API - Skema Database (idempotent)
--- Eksekusi lewat database/migrate.go saat aplikasi dijalankan.
+-- Todo List REST API - Migration 000001: create_tables
+-- Up: membuat tabel users, priorities, todos
 -- =====================================================================
 
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id_users        INT AUTO_INCREMENT PRIMARY KEY,
     nama            VARCHAR(100) NOT NULL,
     email           VARCHAR(100) NOT NULL UNIQUE,
@@ -14,13 +14,13 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS priorities (
+CREATE TABLE priorities (
     id_priorities   INT PRIMARY KEY,
     name            VARCHAR(50) NOT NULL,
     description     TEXT NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS todos (
+CREATE TABLE todos (
     id_todos        INT AUTO_INCREMENT PRIMARY KEY,
     id_users        INT NOT NULL,
     id_priorities   INT NOT NULL,

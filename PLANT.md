@@ -80,7 +80,7 @@ Tugas dikelompokkan ke dalam 4 skala prioritas:
 
 ## 📡 API Endpoint Design (Kontrak API)
 
-Spesifikasi kontrak API lengkap (OpenAPI 3.0) berisi *request body*, *response payload*, parameter, dan skema autentikasi telah didefinisikan secara resmi di file [`api-spec.json`](file:///D:/LATIHAN%20CODING%20SENDIRI/GOLANG/go_todolist/api-spec.json).
+Spesifikasi kontrak API lengkap (OpenAPI 3.0) berisi *request body*, *response payload*, parameter, dan skema autentikasi telah didefinisikan secara resmi di file [`api/api-spec.json`](file:///D:/LATIHAN%20CODING%20SENDIRI/GOLANG/go_todolist/api/api-spec.json).
 
 #### Konvensi Response Error
 
@@ -108,6 +108,7 @@ Response sukses (`2xx`) tidak berubah: `{ code, status, message, data }`.
 | Bahasa          | Go 1.26                                                              |
 | Router          | **`github.com/julienschmidt/httprouter`** (path param `:slug`)        |
 | Database        | **MySQL** (driver `github.com/go-sql-driver/mysql`)                  |
+| Migrasi DB      | **`github.com/golang-migrate/migrate/v4`** (file versi di `db/migrations/`) |
 | Autentikasi     | OTP email (SMTP) → JWT HS256 (`github.com/golang-jwt/jwt/v5`)        |
 | Pengiriman Email| `net/smtp` via konfigurasi `.env` (host, port, username, password)   |
 | Slug Generator  | Helper internal (lowercase, tanpa aksara khusus, auto suffix `-1`/`-2`) |
@@ -122,34 +123,41 @@ Response sukses (`2xx`) tidak berubah: `{ code, status, message, data }`.
 ## 📁 Struktur Folder & File
 
 ```
-go_todolist/
-├── main.go                    # Entry point & routing (httprouter)
-├── config/                    # config.go — load .env, koneksi MySQL
-├── database/                  # migrate.go, schema.sql, seed.sql
-├── models/                    # struct User, Priority, Todo
-├── repository/                # query DB per entity
-├── service/                   # logika bisnis (OTP, slug, upload, email)
-├── handler/                   # HTTP handler per endpoint
-├── middleware/                # AuthMiddleware (verifikasi JWT)
-├── utils/                     # response helper, JWT, slug, validasi, upload
-├── uploads/                   # static file:
-│   ├── profiles/              #   foto profil pengguna
-│   └── todos/                 #   gambar lampiran tugas
-├── .env                       # konfigurasi (JANGAN di-commit)
-├── .env.example               # template .env yang aman untuk di-commit
-├── .gitignore                 # mengecualikan .env, uploads/, *.exe, dll
-└── go.mod
+go_todolist/                      (pola golang-clean-architecture / khannedy)
+├── api/                          # api-spec.json
+├── cmd/
+│   └── web/                      # main.go — entry point & routing (httprouter)
+├── db/
+│   └── migrations/               # migrasi versi golang-migrate (000001, 000002, ...)
+├── internal/
+│   ├── config/                   # load .env, koneksi MySQL
+│   ├── delivery/
+│   │   └── http/                 # HTTP handler + auth middleware (httprouter)
+│   ├── entity/                   # business entity murni (User, Priority, Todo)
+│   ├── gateway/
+│   │   └── email/                # SMTP mailer (kirim OTP)
+│   ├── model/                    # DTO request/response
+│   ├── repository/               # query DB per entity (MySQL)
+│   └── usecase/                  # logika bisnis (OTP, slug, upload, email)
+├── test/                         # integration / end-to-end test
+├── uploads/                      # static file hasil upload user:
+│   ├── profiles/                 #   foto profil pengguna
+│   └── todos/                    #   gambar lampiran tugas
+├── .env                          # konfigurasi (JANGAN di-commit)
+├── .env.example                  # template .env yang aman untuk di-commit
+├── .gitignore                    # mengecualikan .env, uploads/, *.exe, dll
+├── go.mod
+└── go.sum
 ```
 
 ### File Non-Go yang Dibutuhkan
-| File                  | Peran                                                          |
-| :-------------------- | :------------------------------------------------------------- |
-| `.env`                | Konfigurasi runtime (secret MySQL, JWT, SMTP) — tidak di-commit |
-| `.env.example`        | Contoh konfigurasi ringkas (nilai placeholder) untuk developer  |
-| `.gitignore`          | Mencegah secret & artefak masuk ke version control              |
-| `database/schema.sql` | DDL migrasi tabel `users`, `priorities`, `todos` (idempotent)   |
-| `database/seed.sql`   | Seed 4 data master `priorities` (skala Eisenhower 1–4)          |
-| `uploads/.gitkeep`    | Menjaga folder upload tetap ada walau kosong di repo            |
+| File                        | Peran                                                          |
+| :-------------------------- | :------------------------------------------------------------- |
+| `.env`                      | Konfigurasi runtime (secret MySQL, JWT, SMTP) — tidak di-commit |
+| `.env.example`              | Contoh konfigurasi ringkas (nilai placeholder) untuk developer  |
+| `.gitignore`                | Mencegah secret & artefak masuk ke version control              |
+| `db/migrations/00000X_*.up.sql` / `.down.sql` | Migrasi versi tabel & seed (golang-migrate) |
+| `uploads/profiles/.gitkeep`, `uploads/todos/.gitkeep` | Menjaga folder upload tetap ada walau kosong |
 
 ## 🔐 Konfigurasi `.env`
 
