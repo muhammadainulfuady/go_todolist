@@ -1,0 +1,963 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Todo List REST API",
+    "description": "Spesifikasi API lengkap untuk aplikasi Todo List berbasis Go, dilengkapi dengan validasi input, status code HTTP & payload, penanganan URL slug untuk tugas, serta deskripsi detail untuk tiap endpoint.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api/v1",
+      "description": "Development Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Endpoints untuk registrasi, permintaan kode OTP via email, verifikasi OTP, dan penerbitan JWT token"
+    },
+    {
+      "name": "Profile",
+      "description": "Endpoints untuk mengambil dan memperbarui data profil serta foto profil pengguna"
+    },
+    {
+      "name": "Priorities",
+      "description": "Endpoints master data untuk 4 tingkat prioritas tugas berdasarkan Eisenhower Matrix. Endpoint ini bersifat publik tanpa autentikasi."
+    },
+    {
+      "name": "Todos",
+      "description": "Endpoints manajemen tugas lengkap (Create, Read, Update, Delete, Toggle Complete, Search, dan Filter berbasis Slug)"
+    }
+  ],
+  "paths": {
+    "/auth/request-otp": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Meminta Kode OTP via Email",
+        "description": "Mengirimkan kode OTP 6 digit ke alamat email pengguna. Jika pengguna belum terdaftar, akun baru akan dibuat otomatis.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RequestOtpRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Kode OTP berhasil dibuat dan dikirim ke email",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OtpSentResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Kode OTP telah berhasil dikirimkan ke email anda",
+                  "data": {
+                    "email": "budi@example.com"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Gagal validasi input request (misal email tidak valid / nama terlalu pendek)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "example": {
+                  "code": 400,
+                  "status": "fail",
+                  "message": "Validasi gagal",
+                  "errors": {
+                    "nama": "Nama minimal 3 karakter",
+                    "email": "Format email tidak valid"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Terjadi kesalahan internal pada server (misal gagal kirim email / database error)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 500,
+                  "status": "error",
+                  "message": "Terjadi kesalahan server saat mengirim email OTP"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-otp": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Verifikasi Kode OTP & Login",
+        "description": "Memverifikasi kode OTP 6 digit yang dikirimkan ke email. Jika valid dan belum expired, mengembalikan token JWT untuk autentikasi.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VerifyOtpRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Verifikasi OTP berhasil, JWT token diterbitkan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/AuthResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Login berhasil",
+                  "data": {
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                    "user": {
+                      "id_users": 1,
+                      "nama": "Budi Santoso",
+                      "email": "budi@example.com",
+                      "foto_profile": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Kode OTP salah atau telah kedaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 400,
+                  "status": "fail",
+                  "message": "Kode OTP salah atau telah kedaluwarsa"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Email pengguna tidak ditemukan di sistem",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 404,
+                  "status": "fail",
+                  "message": "Email tidak terdaftar"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Mendapatkan Profil Pengguna",
+        "description": "Mengambil detail data pengguna yang sedang login berdasarkan JWT Token yang dikirim di HTTP Header Authorization.",
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Data profil berhasil ditemukan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProfileResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Berhasil mengambil data profil",
+                  "data": {
+                    "id_users": 1,
+                    "nama": "Budi Santoso",
+                    "email": "budi@example.com",
+                    "foto_profile": "http://localhost:8080/uploads/profiles/default.png",
+                    "created_at": "2026-08-07T20:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT tidak ada, tidak valid, atau telah kadaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 401,
+                  "status": "fail",
+                  "message": "Autentikasi gagal"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profile"],
+        "summary": "Update Nama / Upload Foto Profil",
+        "description": "Memperbarui nama pengguna dan/atau mengunggah berkas foto profil baru (format JPG, PNG, max 2MB).",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/ProfileUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profil pengguna berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProfileResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Profil berhasil diperbarui",
+                  "data": {
+                    "id_users": 1,
+                    "nama": "Budi Santoso Update",
+                    "email": "budi@example.com",
+                    "foto_profile": "http://localhost:8080/uploads/profiles/profile_1.jpg",
+                    "updated_at": "2026-08-07T21:30:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Format berkas foto tidak didukung atau ukuran melebihi batas 2MB",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "example": {
+                  "code": 400,
+                  "status": "fail",
+                  "message": "Validasi gagal",
+                  "errors": {
+                    "nama": "Format nama tidak valid",
+                    "foto_profile": "Format gambar harus .jpg/.png dan ukuran maksimal 2MB"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT tidak ditemukan atau tidak valid",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 401,
+                  "status": "fail",
+                  "message": "Autentikasi gagal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/priorities": {
+      "get": {
+        "tags": ["Priorities"],
+        "summary": "Mendapatkan Daftar Master Prioritas",
+        "description": "Mengambil 4 daftar master data prioritas tugas (Penting & Mendesak, Penting tapi Tidak Mendesak, dst.). Endpoint publik tanpa autentikasi.",
+        "responses": {
+          "200": {
+            "description": "Daftar prioritas berhasil didapatkan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PriorityListResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Berhasil mengambil daftar prioritas",
+                  "data": [
+                    {
+                      "id_priorities": 1,
+                      "name": "Penting & Mendesak",
+                      "description": "Kerjakan sekarang"
+                    },
+                    {
+                      "id_priorities": 2,
+                      "name": "Penting tapi Tidak Mendesak",
+                      "description": "Jadwalkan waktu khusus"
+                    },
+                    {
+                      "id_priorities": 3,
+                      "name": "Tidak Penting tapi Mendesak",
+                      "description": "Delegasikan jika memungkinkan"
+                    },
+                    {
+                      "id_priorities": 4,
+                      "name": "Tidak Penting & Tidak Mendesak",
+                      "description": "Hapus atau tunda dulu"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/todos": {
+      "get": {
+        "tags": ["Todos"],
+        "summary": "Mendapatkan Daftar Tugas (dengan Search & Filter)",
+        "description": "Mengambil semua tugas milik pengguna yang sedang login. Mendukung pencarian kata kunci judul dan penyaringan berdasarkan ID prioritas.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "maxLength": 150 },
+            "description": "Pencarian kata kunci berdasarkan judul tugas"
+          },
+          {
+            "name": "id_priorities",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "enum": [1, 2, 3, 4] },
+            "description": "Menyaring tugas berdasarkan skala prioritas (1 - 4)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar tugas berhasil diambil",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TodoListResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Berhasil mengambil daftar tugas",
+                  "data": [
+                    {
+                      "id_todos": 1,
+                      "id_users": 1,
+                      "id_priorities": 1,
+                      "priority": {
+                        "id_priorities": 1,
+                        "name": "Penting & Mendesak"
+                      },
+                      "title": "Mengerjakan Laporan Kinerja",
+                      "slug": "mengerjakan-laporan-kinerja",
+                      "description": "Harus selesai sebelum jam 5 sore",
+                      "image": "http://localhost:8080/uploads/todos/task_1.jpg",
+                      "is_completed": false,
+                      "created_at": "2026-08-07T21:00:00Z",
+                      "updated_at": "2026-08-07T21:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT tidak valid",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 401,
+                  "status": "fail",
+                  "message": "Autentikasi gagal"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Todos"],
+        "summary": "Membuat Tugas Baru",
+        "description": "Membuat tugas todo baru untuk pengguna yang sedang login. Slug URL dibuat otomatis dari judul. Lampiran foto bersifat opsional (max 2MB).",
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/TodoCreateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tugas baru berhasil dibuat",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TodoResponse" },
+                "example": {
+                  "code": 201,
+                  "status": "success",
+                  "message": "Tugas berhasil dibuat",
+                  "data": {
+                    "id_todos": 2,
+                    "id_users": 1,
+                    "id_priorities": 2,
+                    "title": "Beli Perlengkapan Kantin",
+                    "slug": "beli-perlengkapan-kantin",
+                    "description": "Beli gula, kopi, dan teh",
+                    "image": null,
+                    "is_completed": false,
+                    "created_at": "2026-08-07T21:05:00Z",
+                    "updated_at": "2026-08-07T21:05:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validasi input gagal (misal judul kosong atau prioritas di luar rentang 1-4)",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "example": {
+                  "code": 400,
+                  "status": "fail",
+                  "message": "Validasi gagal",
+                  "errors": {
+                    "title": "Judul tugas tidak boleh kosong",
+                    "id_priorities": "Prioritas harus dipilih antara skala 1 sampai 4"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token JWT tidak valid",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 401,
+                  "status": "fail",
+                  "message": "Autentikasi gagal"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/todos/{slug}": {
+      "get": {
+        "tags": ["Todos"],
+        "summary": "Mendapatkan Detail 1 Tugas berdasarkan Slug",
+        "description": "Mengambil detail lengkap 1 tugas spesifik milik pengguna berdasarkan slug URL tugas.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "mengerjakan-laporan-kinerja",
+            "description": "Slug URL unik dari tugas (contoh: `mengerjakan-laporan-kinerja`)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail tugas ditemukan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TodoResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Berhasil mengambil detail tugas",
+                  "data": {
+                    "id_todos": 1,
+                    "id_users": 1,
+                    "id_priorities": 1,
+                    "title": "Mengerjakan Laporan Kinerja",
+                    "slug": "mengerjakan-laporan-kinerja",
+                    "description": "Harus selesai sebelum jam 5 sore",
+                    "image": "http://localhost:8080/uploads/todos/task_1.jpg",
+                    "is_completed": false,
+                    "created_at": "2026-08-07T21:00:00Z",
+                    "updated_at": "2026-08-07T21:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tugas tidak ditemukan atau bukan milik pengguna tersebut",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 404,
+                  "status": "fail",
+                  "message": "Tugas tidak ditemukan"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Todos"],
+        "summary": "Mengedit Data Tugas berdasarkan Slug",
+        "description": "Memperbarui data judul, deskripsi, prioritas, atau mengganti gambar pada tugas tertentu. Jika judul berubah, slug baru akan dihasilkan.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "mengerjakan-laporan-kinerja",
+            "description": "Slug URL tugas yang akan diperbarui"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": { "$ref": "#/components/schemas/TodoUpdateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tugas berhasil diperbarui",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TodoUpdateResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Tugas berhasil diperbarui",
+                  "data": {
+                    "id_todos": 1,
+                    "title": "Mengerjakan Laporan Kinerja Revisi",
+                    "slug": "mengerjakan-laporan-kinerja-revisi",
+                    "updated_at": "2026-08-07T21:35:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tugas tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 404,
+                  "status": "fail",
+                  "message": "Tugas tidak ditemukan"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Todos"],
+        "summary": "Menghapus Tugas berdasarkan Slug",
+        "description": "Menghapus data tugas beserta file gambar lampirannya berdasarkan slug tugas.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "mengerjakan-laporan-kinerja",
+            "description": "Slug URL tugas yang akan dihapus"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tugas berhasil dihapus",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DeleteResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Tugas berhasil dihapus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tugas tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 404,
+                  "status": "fail",
+                  "message": "Tugas tidak ditemukan"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/todos/{slug}/toggle": {
+      "patch": {
+        "tags": ["Todos"],
+        "summary": "Toggle Status Selesai (Undo / Redo) berdasarkan Slug",
+        "description": "Mengubah status tugas dari Belum Selesai (`false`) menjadi Selesai (`true`), atau sebaliknya (Undo/Redo) menggunakan slug URL.",
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "example": "mengerjakan-laporan-kinerja",
+            "description": "Slug URL tugas yang akan diubah statusnya"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status tugas berhasil diubah",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TodoToggleResponse" },
+                "example": {
+                  "code": 200,
+                  "status": "success",
+                  "message": "Status penyelesaian tugas berhasil diperbarui",
+                  "data": {
+                    "id_todos": 1,
+                    "slug": "mengerjakan-laporan-kinerja",
+                    "is_completed": true,
+                    "updated_at": "2026-08-07T21:40:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tugas tidak ditemukan",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+                "example": {
+                  "code": 404,
+                  "status": "fail",
+                  "message": "Tugas tidak ditemukan"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["code", "status", "message"],
+        "properties": {
+          "code": { "type": "integer", "description": "HTTP status code" },
+          "status": { "type": "string", "enum": ["fail", "error"] },
+          "message": { "type": "string", "description": "Ringkasan pesan error" }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "required": ["code", "status", "message", "errors"],
+        "properties": {
+          "code": { "type": "integer", "description": "HTTP status code (biasanya 400)" },
+          "status": { "type": "string", "example": "fail" },
+          "message": { "type": "string", "example": "Validasi gagal" },
+          "errors": {
+            "type": "object",
+            "additionalProperties": { "type": "string" },
+            "description": "Map pesan error per field yang gagal validasi"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id_users": { "type": "integer", "example": 1 },
+          "nama": { "type": "string", "example": "Budi Santoso" },
+          "email": { "type": "string", "format": "email", "example": "budi@example.com" },
+          "foto_profile": { "type": "string", "nullable": true, "description": "URL foto profil" },
+          "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+          "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+        }
+      },
+      "Priority": {
+        "type": "object",
+        "properties": {
+          "id_priorities": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Penting & Mendesak" },
+          "description": { "type": "string", "example": "Kerjakan sekarang" }
+        }
+      },
+      "TodoPriority": {
+        "type": "object",
+        "description": "Prioritas yang ditampilkan di dalam objek todo",
+        "properties": {
+          "id_priorities": { "type": "integer", "example": 1 },
+          "name": { "type": "string", "example": "Penting & Mendesak" }
+        }
+      },
+      "Todo": {
+        "type": "object",
+        "properties": {
+          "id_todos": { "type": "integer", "example": 1 },
+          "id_users": { "type": "integer", "example": 1 },
+          "id_priorities": { "type": "integer", "example": 1 },
+          "priority": { "$ref": "#/components/schemas/TodoPriority" },
+          "title": { "type": "string", "example": "Mengerjakan Laporan Kinerja" },
+          "slug": { "type": "string", "example": "mengerjakan-laporan-kinerja" },
+          "description": { "type": "string", "nullable": true, "example": "Harus selesai sebelum jam 5 sore" },
+          "image": { "type": "string", "nullable": true, "description": "URL gambar lampiran" },
+          "is_completed": { "type": "boolean", "default": false },
+          "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+          "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+        }
+      },
+      "OtpSentResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string", "example": "Kode OTP telah berhasil dikirimkan ke email anda" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "email": { "type": "string", "format": "email", "example": "budi@example.com" }
+            }
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string", "example": "Login berhasil" },
+          "data": {
+            "type": "object",
+            "required": ["token", "user"],
+            "properties": {
+              "token": { "type": "string", "description": "JWT access token" },
+              "user": { "$ref": "#/components/schemas/User" }
+            }
+          }
+        }
+      },
+      "ProfileResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string", "example": "Berhasil mengambil data profil" },
+          "data": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "PriorityListResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Priority" }
+          }
+        }
+      },
+      "TodoListResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Todo" }
+          }
+        }
+      },
+      "TodoResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer" },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string" },
+          "data": { "$ref": "#/components/schemas/Todo" }
+        }
+      },
+      "TodoUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string", "example": "Tugas berhasil diperbarui" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id_todos": { "type": "integer", "example": 1 },
+              "title": { "type": "string" },
+              "slug": { "type": "string" },
+              "updated_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "TodoToggleResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id_todos": { "type": "integer", "example": 1 },
+              "slug": { "type": "string" },
+              "is_completed": { "type": "boolean" },
+              "updated_at": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "DeleteResponse": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 200 },
+          "status": { "type": "string", "example": "success" },
+          "message": { "type": "string", "example": "Tugas berhasil dihapus" }
+        }
+      },
+      "RequestOtpRequest": {
+        "type": "object",
+        "required": ["nama", "email"],
+        "properties": {
+          "nama": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 100,
+            "example": "Budi Santoso",
+            "description": "Nama lengkap pengguna (minimal 3 karakter, maksimal 100 karakter)"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100,
+            "example": "budi@example.com",
+            "description": "Alamat email unik pengguna (maksimal 100 karakter)"
+          }
+        }
+      },
+      "VerifyOtpRequest": {
+        "type": "object",
+        "required": ["email", "otp_code"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 100,
+            "example": "budi@example.com",
+            "description": "Alamat email pengguna"
+          },
+          "otp_code": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 6,
+            "pattern": "^[0-9]{6}$",
+            "example": "123456",
+            "description": "Kode OTP 6 digit angka"
+          }
+        }
+      },
+      "ProfileUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "nama": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 100,
+            "example": "Budi Santoso Update",
+            "description": "Nama baru pengguna (maksimal 100 karakter)"
+          },
+          "foto_profile": {
+            "type": "string",
+            "format": "binary",
+            "description": "File foto profil (format .jpg, .png, maksimal 2MB)"
+          }
+        }
+      },
+      "TodoCreateRequest": {
+        "type": "object",
+        "required": ["title", "id_priorities"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150,
+            "example": "Beli Perlengkapan Kantin",
+            "description": "Judul tugas (wajib, maksimal 150 karakter)"
+          },
+          "description": {
+            "type": "string",
+            "example": "Beli gula, kopi, dan teh",
+            "description": "Detail catatan tugas (opsional)"
+          },
+          "id_priorities": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 2,
+            "description": "ID skala prioritas dari 1 sampai 4"
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "description": "File gambar lampiran tugas (opsional, max 2MB)"
+          }
+        }
+      },
+      "TodoUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string", "maxLength": 150, "description": "Judul tugas baru (opsional)" },
+          "description": { "type": "string", "description": "Detail catatan tugas baru (opsional)" },
+          "id_priorities": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "ID skala prioritas dari 1 sampai 4 (opsional)"
+          },
+          "image": {
+            "type": "string",
+            "format": "binary",
+            "description": "File gambar lampiran baru (opsional, max 2MB)"
+          }
+        }
+      }
+    }
+  }
+}

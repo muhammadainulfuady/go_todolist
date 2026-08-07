@@ -1,0 +1,24 @@
+# Environment & secrets — jangan pernah di-commit
+.env
+.env.local
+
+# Artefak build
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# File upload (file pengguna)
+uploads/profiles/*
+uploads/todos/*
+!uploads/profiles/.gitkeep
+!uploads/todos/.gitkeep
+
+# Editor & OS
+.vscode/
+.idea/
+.DS_Store
+
+# Log
+*.log
