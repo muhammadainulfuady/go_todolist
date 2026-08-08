@@ -26,7 +26,7 @@ func main() {
 	router := deliveryhttp.NewRouter(db)
 
 	addr := ":" + cfg.Server.Port
-	fmt.Printf("Server berjalan di %s%s\n", cfg.Server.BaseURL, "/api/v1")
+	fmt.Printf("Server berjalan di %s%s\n", cfg.Server.BaseURL, "/api/v1/health")
 	if err := http.ListenAndServe(addr, router); err != nil {
 		fmt.Fprintf(os.Stderr, "Server error: %v\n", err)
 		os.Exit(1)

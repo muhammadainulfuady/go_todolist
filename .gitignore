@@ -22,3 +22,6 @@ uploads/todos/*
 
 # Log
 *.log
+
+# plant
+PLANT.md
