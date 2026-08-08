@@ -12,11 +12,12 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig
-	DB     DBConfig
-	JWT    JWTConfig
-	SMTP   SMTPConfig
-	OTP    OTPConfig
+	Server       ServerConfig
+	DB           DBConfig
+	JWT          JWTConfig
+	ResendAPIKey string
+	SeedEmail    string
+	OTP          OTPConfig
 }
 
 type ServerConfig struct {
@@ -37,13 +38,6 @@ type JWTConfig struct {
 	ExpiresIn time.Duration
 }
 
-type SMTPConfig struct {
-	Host string
-	Port string
-	User string
-	Pass string
-}
-
 type OTPConfig struct {
 	ExpiresIn time.Duration
 }
@@ -54,6 +48,11 @@ func Load() (*Config, error) {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
 		return nil, fmt.Errorf("JWT_SECRET wajib diisi di file .env")
+	}
+
+	resendAPIKey := os.Getenv("RESEND_API_KEY")
+	if resendAPIKey == "" {
+		return nil, fmt.Errorf("RESEND_API_KEY wajib diisi di file .env")
 	}
 
 	cfg := &Config{
@@ -68,19 +67,12 @@ func Load() (*Config, error) {
 			Password: os.Getenv("DB_PASSWORD"),
 			Name:     envOrDefault("DB_NAME", "go_todolist"),
 		},
-		SMTP: SMTPConfig{
-			Host: envOrDefault("SMTP_HOST", "smtp.gmail.com"),
-			Port: envOrDefault("SMTP_PORT", "587"),
-			User: os.Getenv("SMTP_USER"),
-			Pass: os.Getenv("SMTP_PASS"),
-		},
+		ResendAPIKey: resendAPIKey,
+		SeedEmail:    envOrDefault("SEED_EMAIL", "programmerhandal404@gmail.com"),
 	}
 
 	if cfg.DB.Host == "" || cfg.DB.Name == "" {
 		return nil, fmt.Errorf("DB_HOST dan DB_NAME wajib diisi")
-	}
-	if cfg.SMTP.User == "" || cfg.SMTP.Pass == "" {
-		return nil, fmt.Errorf("SMTP_USER dan SMTP_PASS wajib diisi")
 	}
 
 	jwtExp, err := time.ParseDuration(envOrDefault("JWT_EXPIRES_IN", "24h"))

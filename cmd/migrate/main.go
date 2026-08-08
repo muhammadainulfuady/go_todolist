@@ -1,31 +1,33 @@
 package main
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/sirupsen/logrus"
 
 	"go_todolist/internal/config"
 	"go_todolist/internal/database"
+	"go_todolist/internal/helper"
 )
 
 const migrationsDir = "db/migrations"
 
 func main() {
+	helper.InitLogger()
+
 	if len(os.Args) < 2 {
-		fmt.Println("Penggunaan: go run cmd/migrate/main.go <up|down|seed>")
+		logrus.Info("Penggunaan: go run cmd/migrate/main.go <up|down|seed>")
 		os.Exit(1)
 	}
 
 	cfg, err := config.Load()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Gagal load config: %v\n", err)
-		os.Exit(1)
+		logrus.WithField("detail", err.Error()).Fatal("Gagal load config")
 	}
 
 	db, err := cfg.ConnectDB()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Gagal koneksi database: %v\n", err)
-		os.Exit(1)
+		logrus.WithField("detail", err.Error()).Fatal("Gagal koneksi database")
 	}
 	defer db.Close()
 
@@ -35,14 +37,13 @@ func main() {
 	case "down":
 		err = database.DropMigrations(db, migrationsDir)
 	case "seed":
-		err = database.RunSeed(db)
+		err = database.RunSeed(db, cfg.SeedEmail)
 	default:
-		fmt.Println("Perintah tidak dikenal. Gunakan: up | down | seed")
+		logrus.Warn("Perintah tidak dikenal. Gunakan: up | down | seed")
 		os.Exit(1)
 	}
 
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Gagal: %v\n", err)
-		os.Exit(1)
+		logrus.WithField("detail", err.Error()).Fatal("Gagal")
 	}
 }

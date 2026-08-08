@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 const schemaMigrationsDDL = `
@@ -41,7 +43,7 @@ func RunMigrations(db *sql.DB, dir string) error {
 
 	for _, m := range files {
 		if applied[m.Version] {
-			fmt.Printf("skip (sudah diterapkan): %s\n", m.Filename)
+			logrus.WithField("file", m.Filename).Info("skip (sudah diterapkan)")
 			continue
 		}
 
@@ -61,10 +63,10 @@ func RunMigrations(db *sql.DB, dir string) error {
 			return fmt.Errorf("gagal mencatat versi %d: %w", m.Version, err)
 		}
 
-		fmt.Printf("diterapkan: %s\n", m.Filename)
+		logrus.WithField("file", m.Filename).Info("diterapkan")
 	}
 
-	fmt.Println("Migrasi up selesai.")
+	logrus.Info("Migrasi up selesai.")
 	return nil
 }
 
@@ -87,7 +89,7 @@ func DropMigrations(db *sql.DB, dir string) error {
 
 	for _, m := range files {
 		if !applied[m.Version] {
-			fmt.Printf("skip (belum diterapkan): %s\n", m.Filename)
+			logrus.WithField("file", m.Filename).Info("skip (belum diterapkan)")
 			continue
 		}
 
@@ -107,10 +109,10 @@ func DropMigrations(db *sql.DB, dir string) error {
 			return fmt.Errorf("gagal menghapus catatan versi %d: %w", m.Version, err)
 		}
 
-		fmt.Printf("di-rollback: %s\n", m.Filename)
+		logrus.WithField("file", m.Filename).Info("di-rollback")
 	}
 
-	fmt.Println("Migrasi down selesai.")
+	logrus.Info("Migrasi down selesai.")
 	return nil
 }
 

@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+
+	"github.com/sirupsen/logrus"
 )
 
 type prioritySeed struct {
@@ -34,33 +36,37 @@ var prioritySeeds = []prioritySeed{
 }
 
 var userSeeds = []userSeed{
-	{Nama: "Budi Santoso", Email: "budi.santoso@gmail.com", FotoProfile: "/uploads/profiles/default.png"},
+	{Nama: "Budi Santoso", Email: "__SEED__", FotoProfile: "/uploads/profiles/default.png"},
 	{Nama: "Siti Rahayu", Email: "siti.rahayu@gmail.com", FotoProfile: "/uploads/profiles/default.png"},
 	{Nama: "Andi Wijaya", Email: "andi.wijaya@gmail.com", FotoProfile: "/uploads/profiles/default.png"},
 }
 
 var todoSeeds = []todoSeed{
-	{Title: "Mengerjakan Laporan Kinerja", Description: "Laporan bulanan untuk atasan", Slug: "mengerjakan-laporan-kinerja", IDPriorities: 1, UserEmail: "budi.santoso@gmail.com"},
+	{Title: "Mengerjakan Laporan Kinerja", Description: "Laporan bulanan untuk atasan", Slug: "mengerjakan-laporan-kinerja", IDPriorities: 1, UserEmail: "__SEED__"},
 	{Title: "Bayar Tagihan Listrik", Description: "Tagihan listrik bulan ini", Slug: "bayar-tagihan-listrik", IDPriorities: 1, UserEmail: "siti.rahayu@gmail.com"},
 	{Title: "Balas Email Klien Penting", Description: "Menindaklanjuti penawaran kerjasama", Slug: "balas-email-klien-penting", IDPriorities: 3, UserEmail: "andi.wijaya@gmail.com"},
-	{Title: "Jadwal Meeting Tim Bulanan", Description: "Koordinasi target bulan depan", Slug: "jadwal-meeting-tim-bulanan", IDPriorities: 2, UserEmail: "budi.santoso@gmail.com"},
+	{Title: "Jadwal Meeting Tim Bulanan", Description: "Koordinasi target bulan depan", Slug: "jadwal-meeting-tim-bulanan", IDPriorities: 2, UserEmail: "__SEED__"},
 	{Title: "Menyusun Strategi Q3", Description: "Perencanaan jangka panjang", Slug: "menyusun-strategi-q3", IDPriorities: 2, UserEmail: "siti.rahayu@gmail.com"},
 	{Title: "Menata Ulang Arsip Dokumen", Description: "Arsip lama dirapikan", Slug: "menata-ulang-arsip-dokumen", IDPriorities: 4, UserEmail: "andi.wijaya@gmail.com"},
 }
 
+const seedUserMarker = "__SEED__"
+
 // RunSeed mengisi master prioritas, dummy users, dan dummy todos.
 // Idempoten: data yang sudah ada (by email / slug) dilewati.
-func RunSeed(db *sql.DB) error {
+// seedEmail dipakai untuk user utama (misal email SMTP yang aktif) agar OTP
+// nyata bisa sampai ke inbox saat pengujian.
+func RunSeed(db *sql.DB, seedEmail string) error {
 	if err := seedPriorities(db); err != nil {
 		return err
 	}
 
-	userIDs, err := seedUsers(db)
+	userIDs, err := seedUsers(db, seedEmail)
 	if err != nil {
 		return err
 	}
 
-	return seedTodos(db, userIDs)
+	return seedTodos(db, userIDs, seedEmail)
 }
 
 func seedPriorities(db *sql.DB) error {
@@ -78,21 +84,30 @@ func seedPriorities(db *sql.DB) error {
 		if _, err := stmt.Exec(p.ID, p.Name, p.Description); err != nil {
 			return fmt.Errorf("gagal seed prioritas %d: %w", p.ID, err)
 		}
-		fmt.Printf("prioritas %d (%s) siap\n", p.ID, p.Name)
+		logrus.WithFields(logrus.Fields{
+			"id":   p.ID,
+			"name": p.Name,
+		}).Info("prioritas siap")
 	}
 	return nil
 }
 
-func seedUsers(db *sql.DB) (map[string]int64, error) {
+func seedUsers(db *sql.DB, seedEmail string) (map[string]int64, error) {
 	userIDs := make(map[string]int64)
 
 	for _, u := range userSeeds {
+		if u.Email == seedUserMarker {
+			u.Email = seedEmail
+		}
 		id, err := ensureUser(db, u)
 		if err != nil {
 			return nil, err
 		}
 		userIDs[u.Email] = id
-		fmt.Printf("user %s (id=%d) siap\n", u.Email, id)
+		logrus.WithFields(logrus.Fields{
+			"email": u.Email,
+			"id":    id,
+		}).Info("user siap")
 	}
 	return userIDs, nil
 }
@@ -117,8 +132,11 @@ func ensureUser(db *sql.DB, u userSeed) (int64, error) {
 	return result.LastInsertId()
 }
 
-func seedTodos(db *sql.DB, userIDs map[string]int64) error {
+func seedTodos(db *sql.DB, userIDs map[string]int64, seedEmail string) error {
 	for _, t := range todoSeeds {
+		if t.UserEmail == seedUserMarker {
+			t.UserEmail = seedEmail
+		}
 		userID, ok := userIDs[t.UserEmail]
 		if !ok {
 			return fmt.Errorf("user %s tidak ditemukan untuk todo %s", t.UserEmail, t.Slug)
@@ -126,7 +144,7 @@ func seedTodos(db *sql.DB, userIDs map[string]int64) error {
 		if err := ensureTodo(db, t, userID); err != nil {
 			return err
 		}
-		fmt.Printf("todo %s siap\n", t.Slug)
+		logrus.WithField("slug", t.Slug).Info("todo siap")
 	}
 	return nil
 }

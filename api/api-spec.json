@@ -208,7 +208,11 @@
         "requestBody": {
           "content": {
             "multipart/form-data": {
-              "schema": { "$ref": "#/components/schemas/ProfileUpdateRequest" }
+              "schema": { "$ref": "#/components/schemas/ProfileUpdateRequest" },
+              "example": {
+                "nama": "Budi Santoso Update",
+                "foto_profile": "(pilih file .jpg/.png maks 2MB)"
+              }
             }
           }
         },
@@ -345,7 +349,7 @@
                   "data": [
                     {
                       "id_todos": 1,
-                      "id_users": 1,
+                      "id_users": 1,  
                       "id_priorities": 1,
                       "priority": {
                         "id_priorities": 1,

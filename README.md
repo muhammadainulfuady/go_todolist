@@ -1,6 +1,6 @@
 # Todo List REST API
 
-RESTful API berbasis **Go** untuk mengelola tugas sehari-hari berdasarkan skala prioritas **Matriks Eisenhower** (4 skala). Autentikasi *passwordless* via **OTP email (SMTP)** + token **JWT**, database **MySQL**. Kontrak API lengkap ada di [`api/api-spec.json`](api/api-spec.json) dan detail teknis di [`PLANT.md`](PLANT.md).
+RESTful API berbasis **Go** untuk mengelola tugas sehari-hari berdasarkan skala prioritas **Matriks Eisenhower** (4 skala). Autentikasi *passwordless* via **OTP email (Resend API)** + token **JWT**, database **MySQL**. Kontrak API lengkap ada di [`api/api-spec.json`](api/api-spec.json) dan detail teknis di [`PLANT.md`](PLANT.md).
 
 ## Prasyarat
 
@@ -9,7 +9,7 @@ RESTful API berbasis **Go** untuk mengelola tugas sehari-hari berdasarkan skala 
 
 ## Setup
 
-1. Salin `.env.example` menjadi `.env` dan isi konfigurasinya (DB, `JWT_SECRET`, SMTP Gmail App Password):
+1. Salin `.env.example` menjadi `.env` dan isi konfigurasinya (DB, `JWT_SECRET`, `RESEND_API_KEY`):
    ```powershell
    Copy-Item .env.example .env
    ```
