@@ -1,26 +1,9 @@
 -- =====================================================================
--- Todo List REST API - Migration 000001: create_tables
--- Up: membuat tabel users, priorities, todos
+-- Todo List REST API - Migration 000003: create_todos_table (up)
+-- Membuat tabel tugas (relasi ke users & priorities)
 -- =====================================================================
 
-CREATE TABLE users (
-    id_users        INT AUTO_INCREMENT PRIMARY KEY,
-    nama            VARCHAR(100) NOT NULL,
-    email           VARCHAR(100) NOT NULL UNIQUE,
-    foto_profile    VARCHAR(255) NULL,
-    otp_code        VARCHAR(6)   NULL,
-    otp_expires_at  DATETIME     NULL,
-    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-CREATE TABLE priorities (
-    id_priorities   INT PRIMARY KEY,
-    name            VARCHAR(50) NOT NULL,
-    description     TEXT NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-CREATE TABLE todos (
+CREATE TABLE IF NOT EXISTS todos (
     id_todos        INT AUTO_INCREMENT PRIMARY KEY,
     id_users        INT NOT NULL,
     id_priorities   INT NOT NULL,

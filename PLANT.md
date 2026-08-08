@@ -65,22 +65,22 @@ Tugas dikelompokkan ke dalam 4 skala prioritas:
 
 ### 3. Tabel `todos`
 
-| Kolom           | Tipe Data    | Constraint                              | Keterangan                                      |
-| :-------------- | :----------- | :-------------------------------------- | :---------------------------------------------- |
-| `id_todos`      | INT / BIGINT | PRIMARY KEY, AUTO_INCREMENT             | Identifier unik tugas                           |
-| `id_users`      | INT / BIGINT | FOREIGN KEY (`users.id_users`)          | Pemilik tugas                                   |
-| `id_priorities` | INT          | FOREIGN KEY (`priorities.id_priorities`) | Skala prioritas (1 - 4)                         |
-| `title`         | VARCHAR(150) | NOT NULL                                | Judul tugas                                     |
-| `slug`          | VARCHAR(200) | UNIQUE, NOT NULL                        | Slug URL (misal: `mengerjakan-pr`, `mengerjakan-pr-1`) |
-| `description`   | TEXT         | NULLABLE                                | Detail/catatan tugas                            |
-| `image`         | VARCHAR(255) | NULLABLE                                | Path/URL gambar lampiran                        |
-| `is_completed`  | BOOLEAN      | DEFAULT FALSE                           | Status penyelesaian tugas                       |
-| `created_at`    | DATETIME     | DEFAULT CURRENT_TIMESTAMP               | Waktu tugas dibuat                              |
-| `updated_at`    | DATETIME     | DEFAULT CURRENT_TIMESTAMP               | Waktu tugas diperbarui                          |
+| Kolom           | Tipe Data    | Constraint                               | Keterangan                                             |
+| :-------------- | :----------- | :--------------------------------------- | :----------------------------------------------------- |
+| `id_todos`      | INT / BIGINT | PRIMARY KEY, AUTO_INCREMENT              | Identifier unik tugas                                  |
+| `id_users`      | INT / BIGINT | FOREIGN KEY (`users.id_users`)           | Pemilik tugas                                          |
+| `id_priorities` | INT          | FOREIGN KEY (`priorities.id_priorities`) | Skala prioritas (1 - 4)                                |
+| `title`         | VARCHAR(150) | NOT NULL                                 | Judul tugas                                            |
+| `slug`          | VARCHAR(200) | UNIQUE, NOT NULL                         | Slug URL (misal: `mengerjakan-pr`, `mengerjakan-pr-1`) |
+| `description`   | TEXT         | NULLABLE                                 | Detail/catatan tugas                                   |
+| `image`         | VARCHAR(255) | NULLABLE                                 | Path/URL gambar lampiran                               |
+| `is_completed`  | BOOLEAN      | DEFAULT FALSE                            | Status penyelesaian tugas                              |
+| `created_at`    | DATETIME     | DEFAULT CURRENT_TIMESTAMP                | Waktu tugas dibuat                                     |
+| `updated_at`    | DATETIME     | DEFAULT CURRENT_TIMESTAMP                | Waktu tugas diperbarui                                 |
 
 ## 📡 API Endpoint Design (Kontrak API)
 
-Spesifikasi kontrak API lengkap (OpenAPI 3.0) berisi *request body*, *response payload*, parameter, dan skema autentikasi telah didefinisikan secara resmi di file [`api/api-spec.json`](file:///D:/LATIHAN%20CODING%20SENDIRI/GOLANG/go_todolist/api/api-spec.json).
+Spesifikasi kontrak API lengkap (OpenAPI 3.0) berisi _request body_, _response payload_, parameter, dan skema autentikasi telah didefinisikan secara resmi di file [`api/api-spec.json`](file:///D:/LATIHAN%20CODING%20SENDIRI/GOLANG/go_todolist/api/api-spec.json).
 
 #### Konvensi Response Error
 
@@ -92,9 +92,15 @@ Response error (`4xx`/`5xx`) memakai `{ code, status, message }`, dengan tambaha
   ```
 - **Error validasi multi-field**: tambahkan `errors` berupa objek `map[string]string`, satu key per kolom yang gagal.
   ```json
-  { "code": 400, "status": "fail", "message": "Validasi gagal",
-    "errors": { "title": "Judul tugas tidak boleh kosong",
-                "id_priorities": "Prioritas harus dipilih antara skala 1 sampai 4" } }
+  {
+    "code": 400,
+    "status": "fail",
+    "message": "Validasi gagal",
+    "errors": {
+      "title": "Judul tugas tidak boleh kosong",
+      "id_priorities": "Prioritas harus dipilih antara skala 1 sampai 4"
+    }
+  }
   ```
 
 Response sukses (`2xx`) tidak berubah: `{ code, status, message, data }`.
@@ -103,20 +109,21 @@ Response sukses (`2xx`) tidak berubah: `{ code, status, message, data }`.
 
 ## ⚙️ Keputusan Teknologi (Final)
 
-| Aspek           | Pilihan                                                            |
-| :-------------- | :----------------------------------------------------------------- |
-| Bahasa          | Go 1.26                                                              |
-| Router          | **`github.com/julienschmidt/httprouter`** (path param `:slug`)        |
-| Database        | **MySQL** (driver `github.com/go-sql-driver/mysql`)                  |
-| Migrasi DB      | **`github.com/golang-migrate/migrate/v4`** (file versi di `db/migrations/`) |
-| Autentikasi     | OTP email (SMTP) → JWT HS256 (`github.com/golang-jwt/jwt/v5`)        |
-| Pengiriman Email| `net/smtp` via konfigurasi `.env` (host, port, username, password)   |
-| Slug Generator  | Helper internal (lowercase, tanpa aksara khusus, auto suffix `-1`/`-2`) |
-| Upload Media    | Folder `uploads/` dilayani static, max 2MB JPG/PNG (validasi `mimetype`) |
-| Validasi Input  | `github.com/go-playground/validator/v10`                              |
-| Testing         | `github.com/stretchr/testify`                                        |
+| Aspek            | Pilihan                                                                     |
+| :--------------- | :-------------------------------------------------------------------------- |
+| Bahasa           | Go 1.26                                                                     |
+| Router           | **`github.com/julienschmidt/httprouter`** (path param `:slug`)              |
+| Database         | **MySQL** (driver `github.com/go-sql-driver/mysql`)                         |
+| Migrasi DB      | **CLI kustom** (`cmd/migrate/main.go` up/down/seed + tabel `schema_migrations`, file SQL per-tabel di `db/migrations/`) |
+| Autentikasi      | OTP email (SMTP) → JWT HS256 (`github.com/golang-jwt/jwt/v5`)               |
+| Pengiriman Email | `net/smtp` via konfigurasi `.env` (host, port, username, password)          |
+| Slug Generator   | Helper internal (lowercase, tanpa aksara khusus, auto suffix `-1`/`-2`)     |
+| Upload Media     | Folder `uploads/` dilayani static, max 2MB JPG/PNG (validasi `mimetype`)    |
+| Validasi Input   | `github.com/go-playground/validator/v10`                                    |
+| Testing          | `github.com/stretchr/testify`                                               |
 
 ### Catatan Endpoint
+
 - **Semua endpoint** (Profile & Todos) dilindungi JWT, kecuali `/auth/*` dan `GET /priorities`.
 - `GET /priorities` sengaja **publik**: data master statis (4 skala Eisenhower) yang sama untuk semua pengguna dan berguna sebelum login.
 
@@ -126,11 +133,13 @@ Response sukses (`2xx`) tidak berubah: `{ code, status, message, data }`.
 go_todolist/                      (pola golang-clean-architecture / khannedy)
 ├── api/                          # api-spec.json
 ├── cmd/
-│   └── web/                      # main.go — entry point & routing (httprouter)
+│   ├── api/                      # main.go — entry point server REST API (httprouter)
+│   └── migrate/                  # main.go — CLI migrasi & seeder (up / down / seed)
 ├── db/
-│   └── migrations/               # migrasi versi golang-migrate (000001, 000002, ...)
+│   └── migrations/               # file SQL per-tabel (.up.sql & .down.sql)
 ├── internal/
 │   ├── config/                   # load .env, koneksi MySQL
+│   ├── database/                 # logika migrasi (schema_migrations) & seeder
 │   ├── delivery/
 │   │   └── http/                 # HTTP handler + auth middleware (httprouter)
 │   ├── entity/                   # business entity murni (User, Priority, Todo)
@@ -151,27 +160,48 @@ go_todolist/                      (pola golang-clean-architecture / khannedy)
 ```
 
 ### File Non-Go yang Dibutuhkan
-| File                        | Peran                                                          |
-| :-------------------------- | :------------------------------------------------------------- |
-| `.env`                      | Konfigurasi runtime (secret MySQL, JWT, SMTP) — tidak di-commit |
-| `.env.example`              | Contoh konfigurasi ringkas (nilai placeholder) untuk developer  |
-| `.gitignore`                | Mencegah secret & artefak masuk ke version control              |
-| `db/migrations/00000X_*.up.sql` / `.down.sql` | Migrasi versi tabel & seed (golang-migrate) |
-| `uploads/profiles/.gitkeep`, `uploads/todos/.gitkeep` | Menjaga folder upload tetap ada walau kosong |
+
+| File                                                  | Peran                                                           |
+| :---------------------------------------------------- | :-------------------------------------------------------------- |
+| `.env`                                                | Konfigurasi runtime (secret MySQL, JWT, SMTP) — tidak di-commit |
+| `.env.example`                                        | Contoh konfigurasi ringkas (nilai placeholder) untuk developer  |
+| `.gitignore`                                          | Mencegah secret & artefak masuk ke version control              |
+| `db/migrations/00000X_*.up.sql` / `.down.sql`         | Migrasi per-tabel (priorities, users, todos) + rollback           |
+| `uploads/profiles/.gitkeep`, `uploads/todos/.gitkeep` | Menjaga folder upload tetap ada walau kosong                    |
+
+## ▶️ Menjalankan Project (Windows / Go murni)
+
+Tanpa `make`, semua perintah dijalankan langsung via `go run` dari root project:
+
+```powershell
+# Menjalankan Server API (http://localhost:8080)
+go run cmd/api/main.go
+
+# Migrasi Database (Up) — membuat tabel + mencatat di schema_migrations
+go run cmd/migrate/main.go up
+
+# Rollback Database (Down) — menghapus tabel (urutan terbalik) + catatan
+go run cmd/migrate/main.go down
+
+# Seeding Data — 4 prioritas Eisenhower, dummy users & todos (idempoten)
+go run cmd/migrate/main.go seed
+```
+
+Urutan yang disarankan saat pertama kali: `up` → `seed` → jalankan server API.
 
 ## 🔐 Konfigurasi `.env`
 
-| Variabel                | Keterangan                                   |
-| :---------------------- | :------------------------------------------- |
-| `APP_PORT`              | Port server (default `8080`)                 |
-| `DB_HOST`, `DB_PORT`    | Host & port MySQL                            |
-| `DB_USER`, `DB_PASSWORD`| Kredensial MySQL                             |
-| `DB_NAME`               | Nama database (`go_todolist`)                |
-| `JWT_SECRET`            | Secret untuk signing JWT (wajib dirahasiakan)|
-| `JWT_EXPIRES_IN`        | Durasi token (contoh `24h`)                  |
-| `SMTP_HOST`, `SMTP_PORT`| Host & port SMTP                             |
-| `SMTP_USER`, `SMTP_PASS`| Kredensial email pengirim                    |
-| `OTP_EXPIRES_IN`        | Masa berlaku OTP (contoh `5m`)               |
+| Variabel                 | Keterangan                                    |
+| :----------------------- | :-------------------------------------------- |
+| `APP_PORT`               | Port server (default `8080`)                  |
+| `DB_HOST`, `DB_PORT`     | Host & port MySQL                             |
+| `DB_USER`, `DB_PASSWORD` | Kredensial MySQL                              |
+| `DB_NAME`                | Nama database (`golang_restful_api_todolist`)         |
+| `JWT_SECRET`             | Secret untuk signing JWT (wajib dirahasiakan) |
+| `JWT_EXPIRES_IN`         | Durasi token (contoh `24h`)                   |
+| `SMTP_HOST`, `SMTP_PORT` | Host & port SMTP                              |
+| `SMTP_USER`, `SMTP_PASS` | Kredensial email pengirim                     |
+| `OTP_EXPIRES_IN`         | Masa berlaku OTP (contoh `5m`)                |
 
 > **Keamanan**: `.env` tidak boleh di-commit (masuk `.gitignore`). JWT secret & kredensial SMTP hanya dibaca dari environment.
 
@@ -179,9 +209,8 @@ go_todolist/                      (pola golang-clean-architecture / khannedy)
 
 ## 🛠️ Rencana Tahapan Eksekusi Development
 
-1. **Fase 1: Database & Core Setup** (Inisialisasi project Go, dependency, koneksi **MySQL**, migrasi DB + seed 4 prioritas)
+1. **Fase 1: Database & Core Setup** (CLI migrasi & seeder kustom `cmd/migrate`, koneksi **MySQL**, migrasi per-tabel di `db/migrations/`, seed 4 prioritas + dummy users/todos, server dasar `cmd/api`)
 2. **Fase 2: Master Priority & Auth OTP** (Endpoint OTP via SMTP, token JWT, middleware auth)
 3. **Fase 3: Profile & Media Handling** (Upload foto profil & default avatar)
 4. **Fase 4: Core Todo CRUD** (Create, Read, Update, Delete, Toggle Status)
 5. **Fase 5: Search, Filter, & Testing** (Pengujian seluruh API via HTTP Client / Postman)
-
