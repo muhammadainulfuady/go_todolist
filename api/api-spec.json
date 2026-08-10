@@ -64,11 +64,14 @@
             "description": "Gagal validasi input request (misal email tidak valid / nama terlalu pendek)",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
                 "example": {
                   "code": 400,
                   "status": "fail",
                   "message": "Validasi gagal",
+                  "data": null,
                   "errors": {
                     "nama": "Nama minimal 3 karakter",
                     "email": "Format email tidak valid"
@@ -85,7 +88,8 @@
                 "example": {
                   "code": 500,
                   "status": "error",
-                  "message": "Terjadi kesalahan server saat mengirim email OTP"
+                  "message": "Terjadi kesalahan server saat mengirim email OTP",
+                  "data": null
                 }
               }
             }
@@ -137,7 +141,8 @@
                 "example": {
                   "code": 400,
                   "status": "fail",
-                  "message": "Kode OTP salah atau telah kedaluwarsa"
+                  "message": "Kode OTP salah atau telah kedaluwarsa",
+                  "data": null
                 }
               }
             }
@@ -150,7 +155,8 @@
                 "example": {
                   "code": 404,
                   "status": "fail",
-                  "message": "Email tidak terdaftar"
+                  "message": "Email tidak terdaftar",
+                  "data": null
                 }
               }
             }
@@ -193,7 +199,8 @@
                 "example": {
                   "code": 401,
                   "status": "fail",
-                  "message": "Autentikasi gagal"
+                  "message": "Autentikasi gagal",
+                  "data": null
                 }
               }
             }
@@ -241,11 +248,14 @@
             "description": "Format berkas foto tidak didukung atau ukuran melebihi batas 2MB",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
                 "example": {
                   "code": 400,
                   "status": "fail",
                   "message": "Validasi gagal",
+                  "data": null,
                   "errors": {
                     "nama": "Format nama tidak valid",
                     "foto_profile": "Format gambar harus .jpg/.png dan ukuran maksimal 2MB"
@@ -262,7 +272,8 @@
                 "example": {
                   "code": 401,
                   "status": "fail",
-                  "message": "Autentikasi gagal"
+                  "message": "Autentikasi gagal",
+                  "data": null
                 }
               }
             }
@@ -280,7 +291,9 @@
             "description": "Daftar prioritas berhasil didapatkan",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/PriorityListResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/PriorityListResponse"
+                },
                 "example": {
                   "code": 200,
                   "status": "success",
@@ -349,7 +362,7 @@
                   "data": [
                     {
                       "id_todos": 1,
-                      "id_users": 1,  
+                      "id_users": 1,
                       "id_priorities": 1,
                       "priority": {
                         "id_priorities": 1,
@@ -376,7 +389,8 @@
                 "example": {
                   "code": 401,
                   "status": "fail",
-                  "message": "Autentikasi gagal"
+                  "message": "Autentikasi gagal",
+                  "data": null
                 }
               }
             }
@@ -410,6 +424,10 @@
                     "id_todos": 2,
                     "id_users": 1,
                     "id_priorities": 2,
+                    "priority": {
+                      "id_priorities": 2,
+                      "name": "Penting tapi Tidak Mendesak"
+                    },
                     "title": "Beli Perlengkapan Kantin",
                     "slug": "beli-perlengkapan-kantin",
                     "description": "Beli gula, kopi, dan teh",
@@ -426,11 +444,14 @@
             "description": "Validasi input gagal (misal judul kosong atau prioritas di luar rentang 1-4)",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
                 "example": {
                   "code": 400,
                   "status": "fail",
                   "message": "Validasi gagal",
+                  "data": null,
                   "errors": {
                     "title": "Judul tugas tidak boleh kosong",
                     "id_priorities": "Prioritas harus dipilih antara skala 1 sampai 4"
@@ -447,7 +468,8 @@
                 "example": {
                   "code": 401,
                   "status": "fail",
-                  "message": "Autentikasi gagal"
+                  "message": "Autentikasi gagal",
+                  "data": null
                 }
               }
             }
@@ -505,7 +527,8 @@
                 "example": {
                   "code": 404,
                   "status": "fail",
-                  "message": "Tugas tidak ditemukan"
+                  "message": "Tugas tidak ditemukan",
+                  "data": null
                 }
               }
             }
@@ -562,7 +585,8 @@
                 "example": {
                   "code": 404,
                   "status": "fail",
-                  "message": "Tugas tidak ditemukan"
+                  "message": "Tugas tidak ditemukan",
+                  "data": null
                 }
               }
             }
@@ -606,7 +630,8 @@
                 "example": {
                   "code": 404,
                   "status": "fail",
-                  "message": "Tugas tidak ditemukan"
+                  "message": "Tugas tidak ditemukan",
+                  "data": null
                 }
               }
             }
@@ -658,7 +683,8 @@
                 "example": {
                   "code": 404,
                   "status": "fail",
-                  "message": "Tugas tidak ditemukan"
+                  "message": "Tugas tidak ditemukan",
+                  "data": null
                 }
               }
             }
@@ -682,16 +708,32 @@
         "properties": {
           "code": { "type": "integer", "description": "HTTP status code" },
           "status": { "type": "string", "enum": ["fail", "error"] },
-          "message": { "type": "string", "description": "Ringkasan pesan error" }
+          "message": {
+            "type": "string",
+            "description": "Ringkasan pesan error"
+          },
+          "data": {
+            "type": "object",
+            "nullable": true,
+            "description": "Selalu null pada response error"
+          }
         }
       },
       "ValidationErrorResponse": {
         "type": "object",
         "required": ["code", "status", "message", "errors"],
         "properties": {
-          "code": { "type": "integer", "description": "HTTP status code (biasanya 400)" },
+          "code": {
+            "type": "integer",
+            "description": "HTTP status code (biasanya 400)"
+          },
           "status": { "type": "string", "example": "fail" },
           "message": { "type": "string", "example": "Validasi gagal" },
+          "data": {
+            "type": "object",
+            "nullable": true,
+            "description": "Selalu null pada response error"
+          },
           "errors": {
             "type": "object",
             "additionalProperties": { "type": "string" },
@@ -704,10 +746,26 @@
         "properties": {
           "id_users": { "type": "integer", "example": 1 },
           "nama": { "type": "string", "example": "Budi Santoso" },
-          "email": { "type": "string", "format": "email", "example": "budi@example.com" },
-          "foto_profile": { "type": "string", "nullable": true, "description": "URL foto profil" },
-          "created_at": { "type": "string", "format": "date-time", "readOnly": true },
-          "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "budi@example.com"
+          },
+          "foto_profile": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL foto profil"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
         }
       },
       "Priority": {
@@ -733,13 +791,35 @@
           "id_users": { "type": "integer", "example": 1 },
           "id_priorities": { "type": "integer", "example": 1 },
           "priority": { "$ref": "#/components/schemas/TodoPriority" },
-          "title": { "type": "string", "example": "Mengerjakan Laporan Kinerja" },
-          "slug": { "type": "string", "example": "mengerjakan-laporan-kinerja" },
-          "description": { "type": "string", "nullable": true, "example": "Harus selesai sebelum jam 5 sore" },
-          "image": { "type": "string", "nullable": true, "description": "URL gambar lampiran" },
+          "title": {
+            "type": "string",
+            "example": "Mengerjakan Laporan Kinerja"
+          },
+          "slug": {
+            "type": "string",
+            "example": "mengerjakan-laporan-kinerja"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "example": "Harus selesai sebelum jam 5 sore"
+          },
+          "image": {
+            "type": "string",
+            "nullable": true,
+            "description": "URL gambar lampiran"
+          },
           "is_completed": { "type": "boolean", "default": false },
-          "created_at": { "type": "string", "format": "date-time", "readOnly": true },
-          "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
         }
       },
       "OtpSentResponse": {
@@ -747,11 +827,18 @@
         "properties": {
           "code": { "type": "integer", "example": 200 },
           "status": { "type": "string", "example": "success" },
-          "message": { "type": "string", "example": "Kode OTP telah berhasil dikirimkan ke email anda" },
+          "message": {
+            "type": "string",
+            "example": "Kode OTP telah berhasil dikirimkan ke email anda"
+          },
           "data": {
             "type": "object",
             "properties": {
-              "email": { "type": "string", "format": "email", "example": "budi@example.com" }
+              "email": {
+                "type": "string",
+                "format": "email",
+                "example": "budi@example.com"
+              }
             }
           }
         }
@@ -777,7 +864,10 @@
         "properties": {
           "code": { "type": "integer", "example": 200 },
           "status": { "type": "string", "example": "success" },
-          "message": { "type": "string", "example": "Berhasil mengambil data profil" },
+          "message": {
+            "type": "string",
+            "example": "Berhasil mengambil data profil"
+          },
           "data": { "$ref": "#/components/schemas/User" }
         }
       },
@@ -819,7 +909,10 @@
         "properties": {
           "code": { "type": "integer", "example": 200 },
           "status": { "type": "string", "example": "success" },
-          "message": { "type": "string", "example": "Tugas berhasil diperbarui" },
+          "message": {
+            "type": "string",
+            "example": "Tugas berhasil diperbarui"
+          },
           "data": {
             "type": "object",
             "properties": {
@@ -947,8 +1040,15 @@
       "TodoUpdateRequest": {
         "type": "object",
         "properties": {
-          "title": { "type": "string", "maxLength": 150, "description": "Judul tugas baru (opsional)" },
-          "description": { "type": "string", "description": "Detail catatan tugas baru (opsional)" },
+          "title": {
+            "type": "string",
+            "maxLength": 150,
+            "description": "Judul tugas baru (opsional)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detail catatan tugas baru (opsional)"
+          },
           "id_priorities": {
             "type": "integer",
             "minimum": 1,

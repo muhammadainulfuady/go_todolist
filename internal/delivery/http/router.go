@@ -25,12 +25,22 @@ func NewRouter(db *sql.DB, cfg *config.Config) *httprouter.Router {
 	profileUsecase := usecase.NewProfileUsecase(userRepo, cfg.Server.BaseURL, "uploads/profiles")
 	profileHandler := NewProfileHandler(profileUsecase)
 
+	todoRepo := repository.NewTodoRepository(db)
+	todoUsecase := usecase.NewTodoUsecase(todoRepo, cfg.Server.BaseURL, "uploads/todos")
+	todoHandler := NewTodoHandler(todoUsecase)
+
 	router.GET("/api/v1/health", HealthHandler(db))
 	router.GET("/api/v1/priorities", PrioritiesHandler(db))
 	router.POST("/api/v1/auth/request-otp", authHandler.RequestOtp)
 	router.POST("/api/v1/auth/verify-otp", authHandler.VerifyOtp)
 	router.GET("/api/v1/profile", AuthMiddleware(cfg.JWT.Secret, profileHandler.GetProfile))
 	router.PUT("/api/v1/profile", AuthMiddleware(cfg.JWT.Secret, profileHandler.UpdateProfile))
+	router.POST("/api/v1/todos", AuthMiddleware(cfg.JWT.Secret, todoHandler.Create))
+	router.GET("/api/v1/todos", AuthMiddleware(cfg.JWT.Secret, todoHandler.List))
+	router.GET("/api/v1/todos/:slug", AuthMiddleware(cfg.JWT.Secret, todoHandler.GetBySlug))
+	router.PUT("/api/v1/todos/:slug", AuthMiddleware(cfg.JWT.Secret, todoHandler.Update))
+	router.DELETE("/api/v1/todos/:slug", AuthMiddleware(cfg.JWT.Secret, todoHandler.Delete))
+	router.PATCH("/api/v1/todos/:slug/toggle", AuthMiddleware(cfg.JWT.Secret, todoHandler.Toggle))
 
 	router.ServeFiles("/uploads/*filepath", http.Dir("uploads"))
 

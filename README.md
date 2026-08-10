@@ -41,3 +41,37 @@ Urutan pertama kali: `go run cmd/migrate/main.go up` → `go run cmd/migrate/mai
 Invoke-RestMethod http://localhost:8080/api/v1/health
 Invoke-RestMethod http://localhost:8080/api/v1/priorities
 ```
+
+## Testing
+
+Integration test ditulis dalam **Go** (`test/`) dengan **testify**, dipecah per-tag mengikuti `api/api-spec.json` (`auth_test.go`, `profile_test.go`, `priorities_test.go`, `health_test.go`, `todos_test.go` + `main_test.go` & `helpers_test.go`).
+
+```powershell
+go test ./test/ -v
+```
+
+Prasyarat:
+- `.env` terisi benar (sama dengan langkah Setup) — test otomatis pindah ke root modul untuk membaca `.env`
+- MySQL aktif serta migrasi & seeding sudah dijalankan (`go run cmd/migrate/main.go up` dan `go run cmd/migrate/main.go seed`)
+
+Catatan: `request-otp` pada test login mengirim **1 email OTP nyata** via Resend ke `SEED_EMAIL` (`.env`) setiap kali `mustToken`/`TestAuthFlow` dijalankan.
+
+## Endpoint API
+
+Base path: `/api/v1`. Semua endpoint bertanda 🔒 membutuhkan header `Authorization: Bearer <JWT>`.
+
+| Metode | Path | Keterangan |
+| :----- | :--- | :--------- |
+| POST | `/auth/request-otp` | Kirim kode OTP via email (auto-create user) |
+| POST | `/auth/verify-otp` | Verifikasi OTP → terbitkan JWT |
+| GET | `/priorities` | Master 4 prioritas Eisenhower (publik) |
+| GET | `/profile` 🔒 | Detail profil dari claims JWT |
+| PUT | `/profile` 🔒 | Update nama / upload foto profil (multipart, max 2MB) |
+| POST | `/todos` 🔒 | Buat tugas (multipart, image opsional max 2MB) |
+| GET | `/todos` 🔒 | Daftar tugas `?search=&id_priorities=` |
+| GET | `/todos/{slug}` 🔒 | Detail 1 tugas |
+| PUT | `/todos/{slug}` 🔒 | Update partial, regenerasi slug, ganti image |
+| DELETE | `/todos/{slug}` 🔒 | Hapus tugas + file gambar |
+| PATCH | `/todos/{slug}/toggle` 🔒 | Flip status `is_completed` (undo/redo) |
+
+Kontrak lengkap (request/response, validasi, contoh) ada di [`api/api-spec.json`](api/api-spec.json).

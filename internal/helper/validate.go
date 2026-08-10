@@ -46,6 +46,12 @@ func translateFieldError(v validator.FieldError) string {
 	label := fieldLabel(v.Field())
 	switch v.Tag() {
 	case "required":
+		if v.Field() == "Title" {
+			return "Judul tugas tidak boleh kosong"
+		}
+		if v.Field() == "IDPriorities" {
+			return "Prioritas harus dipilih antara skala 1 sampai 4"
+		}
 		return label + " wajib diisi"
 	case "email":
 		return "Format email tidak valid"
@@ -53,9 +59,13 @@ func translateFieldError(v validator.FieldError) string {
 		return label + " harus berupa angka"
 	case "len":
 		return label + " harus " + v.Param() + " karakter"
-	case "min":
-		return label + " minimal " + v.Param() + " karakter"
-	case "max":
+	case "min", "max":
+		if v.Field() == "IDPriorities" {
+			return "Prioritas harus dipilih antara skala 1 sampai 4"
+		}
+		if v.Tag() == "min" {
+			return label + " minimal " + v.Param() + " karakter"
+		}
 		return label + " maksimal " + v.Param() + " karakter"
 	default:
 		return label + " tidak valid"
@@ -64,9 +74,11 @@ func translateFieldError(v validator.FieldError) string {
 
 func fieldLabel(field string) string {
 	labels := map[string]string{
-		"Nama":    "Nama",
-		"Email":   "Email",
-		"OtpCode": "Kode OTP",
+		"Nama":        "Nama",
+		"Email":       "Email",
+		"OtpCode":     "Kode OTP",
+		"Title":       "Judul tugas",
+		"IDPriorities": "Prioritas",
 	}
 	if label, ok := labels[field]; ok {
 		return label

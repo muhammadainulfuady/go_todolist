@@ -77,6 +77,7 @@ func writeUsecaseError(w http.ResponseWriter, path string, err error) {
 			"code":    http.StatusBadRequest,
 			"status":  "fail",
 			"message": "Validasi gagal",
+			"data":    nil,
 			"errors":  verr.FieldErrors,
 		})
 		return
@@ -89,6 +90,8 @@ func writeUsecaseError(w http.ResponseWriter, path string, err error) {
 		WriteError(w, http.StatusBadRequest, "fail", "Kode OTP salah atau telah kedaluwarsa")
 	case errors.Is(err, usecase.ErrUserNotFound):
 		WriteError(w, http.StatusNotFound, "fail", "Profil tidak ditemukan")
+	case errors.Is(err, usecase.ErrTodoNotFound):
+		WriteError(w, http.StatusNotFound, "fail", "Tugas tidak ditemukan")
 	default:
 		logrus.WithFields(logrus.Fields{
 			"path":   path,

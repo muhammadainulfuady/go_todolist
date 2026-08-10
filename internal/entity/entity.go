@@ -23,6 +23,7 @@ type Todo struct {
 	IDTodos      int64     `json:"id_todos"`
 	IDUsers      int64     `json:"id_users"`
 	IDPriorities int       `json:"id_priorities"`
+	PriorityName string    `json:"-"`
 	Title        string    `json:"title"`
 	Slug         string    `json:"slug"`
 	Description  *string   `json:"description"`
