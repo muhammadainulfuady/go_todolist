@@ -74,4 +74,6 @@ Base path: `/api/v1`. Semua endpoint bertanda 🔒 membutuhkan header `Authoriza
 | DELETE | `/todos/{slug}` 🔒 | Hapus tugas + file gambar |
 | PATCH | `/todos/{slug}/toggle` 🔒 | Flip status `is_completed` (undo/redo) |
 
+> Catatan: `GET /todos` dengan `search`/`id_priorities` tanpa hasil tetap mengembalikan `200` dengan `data: []` (bukan 404).
+
 Kontrak lengkap (request/response, validasi, contoh) ada di [`api/api-spec.json`](api/api-spec.json).

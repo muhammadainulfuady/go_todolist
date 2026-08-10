@@ -351,32 +351,46 @@
         ],
         "responses": {
           "200": {
-            "description": "Daftar tugas berhasil diambil",
+            "description": "Daftar tugas berhasil diambil. Jika tidak ada tugas yang cocok dengan search/id_priorities, data berupa array kosong ([]) dan status tetap success (bukan 404).",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/TodoListResponse" },
-                "example": {
-                  "code": 200,
-                  "status": "success",
-                  "message": "Berhasil mengambil daftar tugas",
-                  "data": [
-                    {
-                      "id_todos": 1,
-                      "id_users": 1,
-                      "id_priorities": 1,
-                      "priority": {
-                        "id_priorities": 1,
-                        "name": "Penting & Mendesak"
-                      },
-                      "title": "Mengerjakan Laporan Kinerja",
-                      "slug": "mengerjakan-laporan-kinerja",
-                      "description": "Harus selesai sebelum jam 5 sore",
-                      "image": "http://localhost:8080/uploads/todos/task_1.jpg",
-                      "is_completed": false,
-                      "created_at": "2026-08-07T21:00:00Z",
-                      "updated_at": "2026-08-07T21:00:00Z"
+                "examples": {
+                  "berisi": {
+                    "summary": "Ada hasil",
+                    "value": {
+                      "code": 200,
+                      "status": "success",
+                      "message": "Berhasil mengambil daftar tugas",
+                      "data": [
+                        {
+                          "id_todos": 1,
+                          "id_users": 1,
+                          "id_priorities": 1,
+                          "priority": {
+                            "id_priorities": 1,
+                            "name": "Penting & Mendesak"
+                          },
+                          "title": "Mengerjakan Laporan Kinerja",
+                          "slug": "mengerjakan-laporan-kinerja",
+                          "description": "Harus selesai sebelum jam 5 sore",
+                          "image": "http://localhost:8080/uploads/todos/task_1.jpg",
+                          "is_completed": false,
+                          "created_at": "2026-08-07T21:00:00Z",
+                          "updated_at": "2026-08-07T21:00:00Z"
+                        }
+                      ]
                     }
-                  ]
+                  },
+                  "kosong": {
+                    "summary": "Tidak ada hasil (search/filter tidak cocok)",
+                    "value": {
+                      "code": 200,
+                      "status": "success",
+                      "message": "Berhasil mengambil daftar tugas",
+                      "data": []
+                    }
+                  }
                 }
               }
             }
