@@ -98,7 +98,6 @@ func mustToken(t *testing.T) string {
 func doLogin(t *testing.T, email string) string {
 	t.Helper()
 	_, resp := doJSON(t, "POST", "/auth/request-otp", "", map[string]string{
-		"nama":  "Budi Santoso",
 		"email": email,
 	})
 	require.Equal(t, 200, resp.Code, resp.Message)

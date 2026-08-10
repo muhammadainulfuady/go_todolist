@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"regexp"
 	"strings"
 	"time"
 
@@ -20,6 +21,8 @@ import (
 var (
 	ErrEmailNotFound = errors.New("email tidak terdaftar")
 	ErrInvalidOtp    = errors.New("kode OTP salah atau telah kedaluwarsa")
+
+	emailNameRe = regexp.MustCompile(`[^a-z0-9]`)
 )
 
 type AuthUsecase interface {
@@ -56,11 +59,15 @@ func (uc *authUsecase) RequestOtp(ctx context.Context, req *model.RequestOtpRequ
 		return nil, fmt.Errorf("gagal mencari user: %w", err)
 	}
 	if user == nil {
-		id, err := uc.userRepo.Create(ctx, req.Nama, req.Email)
+		nama := emailNameRe.ReplaceAllString(strings.ToLower(strings.Split(req.Email, "@")[0]), "")
+		if len(nama) < 3 {
+			nama = "Pengguna"
+		}
+		id, err := uc.userRepo.Create(ctx, nama, req.Email)
 		if err != nil {
 			return nil, fmt.Errorf("gagal membuat user: %w", err)
 		}
-		user = &entity.User{IDUsers: id, Nama: req.Nama, Email: req.Email}
+		user = &entity.User{IDUsers: id, Nama: nama, Email: req.Email}
 	}
 
 	code, err := generateOTP()

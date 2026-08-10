@@ -5,7 +5,6 @@ import (
 )
 
 type RequestOtpRequest struct {
-	Nama  string `json:"nama" validate:"required,min=3,max=100"`
 	Email string `json:"email" validate:"required,email,max=100"`
 }
 

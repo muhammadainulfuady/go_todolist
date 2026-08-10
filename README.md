@@ -62,7 +62,7 @@ Base path: `/api/v1`. Semua endpoint bertanda 🔒 membutuhkan header `Authoriza
 
 | Metode | Path | Keterangan |
 | :----- | :--- | :--------- |
-| POST | `/auth/request-otp` | Kirim kode OTP via email (auto-create user) |
+| POST | `/auth/request-otp` | Kirim kode OTP via email (cukup `email`; akun baru otomatis dibuat, nama diambil dari bagian sebelum `@`) |
 | POST | `/auth/verify-otp` | Verifikasi OTP → terbitkan JWT |
 | GET | `/priorities` | Master 4 prioritas Eisenhower (publik) |
 | GET | `/profile` 🔒 | Detail profil dari claims JWT |

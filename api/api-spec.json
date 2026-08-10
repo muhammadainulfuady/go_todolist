@@ -34,7 +34,7 @@
       "post": {
         "tags": ["Auth"],
         "summary": "Meminta Kode OTP via Email",
-        "description": "Mengirimkan kode OTP 6 digit ke alamat email pengguna. Jika pengguna belum terdaftar, akun baru akan dibuat otomatis.",
+        "description": "Mengirimkan kode OTP 6 digit ke alamat email pengguna. Jika pengguna belum terdaftar, akun baru akan dibuat otomatis dengan nama yang diambil dari bagian sebelum @ pada email.",
         "requestBody": {
           "required": true,
           "content": {
@@ -61,7 +61,7 @@
             }
           },
           "400": {
-            "description": "Gagal validasi input request (misal email tidak valid / nama terlalu pendek)",
+            "description": "Gagal validasi input request (misal email tidak valid)",
             "content": {
               "application/json": {
                 "schema": {
@@ -73,7 +73,6 @@
                   "message": "Validasi gagal",
                   "data": null,
                   "errors": {
-                    "nama": "Nama minimal 3 karakter",
                     "email": "Format email tidak valid"
                   }
                 }
@@ -965,15 +964,8 @@
       },
       "RequestOtpRequest": {
         "type": "object",
-        "required": ["nama", "email"],
+        "required": ["email"],
         "properties": {
-          "nama": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 100,
-            "example": "Budi Santoso",
-            "description": "Nama lengkap pengguna (minimal 3 karakter, maksimal 100 karakter)"
-          },
           "email": {
             "type": "string",
             "format": "email",

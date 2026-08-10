@@ -8,25 +8,21 @@ import (
 
 func TestRequestOtpValidation(t *testing.T) {
 	_, resp := doJSON(t, "POST", "/auth/request-otp", "", map[string]string{
-		"nama":  "Budi Santoso",
 		"email": "bukanemail",
 	})
 	require.Equal(t, 400, resp.Code)
 	require.NotEmpty(t, resp.Errors["email"])
 
 	_, resp = doJSON(t, "POST", "/auth/request-otp", "", map[string]string{
-		"nama":  "Bu",
 		"email": cfg.SeedEmail,
 	})
-	require.Equal(t, 400, resp.Code)
-	require.NotEmpty(t, resp.Errors["nama"])
+	require.Equal(t, 200, resp.Code, resp.Message)
 }
 
 func TestAuthFlow(t *testing.T) {
 	email := cfg.SeedEmail
 
 	_, reqResp := doJSON(t, "POST", "/auth/request-otp", "", map[string]string{
-		"nama":  "Budi Santoso",
 		"email": email,
 	})
 	require.Equal(t, 200, reqResp.Code, reqResp.Message)
